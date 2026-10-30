@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Deploy | تشغيل الأكواد 24/7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #09090b;
+            --bg-card: #18181b;
+            --bg-hover: #27272a;
+            --primary: #3b82f6; /* أزرق عصري */
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --border: #27272a;
+            --radius: 12px;
+            --font-main: 'Cairo', sans-serif;
+            --font-code: 'Fira Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            font-family: var(--font-main); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* الشريط العلوي */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--primary); }
+        .badge-free {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* المحتوى الرئيسي */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* منطقة الرفع */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-card);
+            margin-bottom: 40px;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .upload-zone i {
+            font-size: 50px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        .upload-zone h2 { font-size: 20px; margin-bottom: 10px; }
+        .upload-zone p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+        .upload-btn {
+            background: var(--primary);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .upload-btn:hover { background: var(--primary-hover); }
+
+        /* قائمة المشاريع */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .project-card:hover { border-color: #3f3f46; }
+        
+        .project-info { display: flex; align-items: center; gap: 15px; }
+        .project-icon {
+            width: 45px; height: 45px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--primary);
+        }
+        .project-details h3 { font-size: 16px; margin-bottom: 5px; }
+        .project-details p { font-size: 12px; color: var(--text-muted); font-family: var(--font-code); }
+        
+        .status-badge {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700;
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .status-dot {
+            width: 8px; height: 8px; background: var(--success);
+            border-radius: 50%; box-shadow: 0 0 8px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .btn-stop {
+            background: transparent; color: var(--text-muted);
+            border: 1px solid var(--border); padding: 8px 15px;
+            border-radius: 8px; cursor: pointer; font-family: var(--font-main); transition: 0.3s;
+        }
+        .btn-stop:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+        /* الطرفية (Terminal) */
+        .terminal {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+        .term-header {
+            background: #111;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #222;
+        }
+        .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .term-dot.red { background: #ef4444; }
+        .term-dot.yellow { background: #f59e0b; }
+        .term-dot.green { background: #10b981; }
+        .term-title { font-family: var(--font-code); font-size: 12px; color: #666; margin-right: auto; }
+        
+        .term-body {
+            padding: 15px;
+            font-family: var(--font-code);
+            font-size: 13px;
+            color: #d4d4d4;
+            overflow-y: auto;
+            flex: 1;
+            line-height: 1.6;
+        }
+        .log-line { margin-bottom: 5px; }
+        .log-time { color: #666; margin-left: 10px; }
+        .log-success { color: var(--success); }
+        .log-info { color: var(--primary); }
+        .log-warn { color: #f59e0b; }
+
+        /* التنبيهات */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 15px 20px; border-radius: 10px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(150%); transition: 0.3s;
+            z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); }
+        .toast i { color: var(--success); font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- الشريط العلوي -->
+    <nav class="navbar">
+        <div class="logo"><i class="fa-solid fa-cube"></i> Nexus Deploy</div>
+        <div class="badge-free"><i class="fa-solid fa-bolt"></i> تشغيل 24/7 مجاناً</div>
+    </nav>
+
+    <!-- المحتوى -->
+    <div class="container">
+        
+        <!-- منطقة الرفع -->
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <h2>اسحب ملفات الأكواد هنا أو انقر للرفع</h2>
+            <p>يدعم ملفات .js, .py, .json, .zip (الرام: 24 جيجا)</p>
+            <button class="upload-btn">اختر ملفاً من جهازك</button>
+            <input type="file" id="file-input" style="display: none;" onchange="handleFileUpload(event)">
+        </div>
+
+        <!-- قائمة المشاريع -->
+        <div class="section-title"><i class="fa-solid fa-server" style="color:var(--primary);"></i> مشاريعي النشطة</div>
+        <div class="projects-list" id="projects-list">
+            <div style="color: var(--text-muted); text-align: center; padding: 20px;">لا توجد مشاريع نشطة. قم برفع ملف للبدء.</div>
+        </div>
+
+        <!-- سجل مباشر (Terminal) -->
+        <div class="section-title"><i class="fa-solid fa-terminal" style="color:var(--primary);"></i> السجلات المباشرة (Logs)</div>
+        <div class="terminal">
+            <div class="term-header">
+                <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+                <div class="term-title">nexus-console</div>
+            </div>
+            <div class="term-body" id="terminal-body">
+                <div class="log-line"><span class="log-time">[00:00:00]</span> <span class="log-info">[SYSTEM]</span> جاهز لاستقبال الأكواد...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- تنبيه -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <div><h4 style="font-size:14px; margin:0;">تم الرفع!</h4><p style="font-size:12px; color:var(--text-muted); margin:0;">جاري تشغيل الكود...</p></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const projectsList = document.getElementById('projects-list');
+        const terminalBody = document.getElementById('terminal-body');
+
+        // تأثير السحب والإفلات
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            if(files.length > 0) handleFileUpload({ target: { files: files } });
+        });
+
+// معالجة رفع الملف (النسخة الحقيقية)
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    showToast();
+    addLog(`بدء رفع الملف: ${file.name}`, 'info');
+    addLog(`حجم الملف: ${(file.size / 1024).toFixed(2)} KB`, 'info');
+
+    // تجهيز البيانات للإرسال
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // ضع رابط الخادم هنا (سنغيره لاحقاً بعد رفعه على استضافة)
+    const backendURL = 'https://YOUR-BACKEND-URL.onrender.com/upload';
+
+    try {
+        addLog(`جاري الإرسال إلى الخادم السحابي...`, 'warn');
+        
+        const response = await fetch(backendURL, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            addLog(`تم الرفع بنجاح إلى الخادم!`, 'success');
+            addLog(`[ONLINE] ${data.message}`, 'success');
+            createProjectCard(file.name);
+        } else {
+            addLog(`[ERROR] ${data.error}`, 'danger');
+        }
+    } catch (error) {
+        addLog(`[ERROR] فشل الاتصال بالخادم. تأكد من تشغيله.`, 'danger');
+        console.error(error);
+    }
+    
+    document.getElementById('file-input').value = '';
+}
+
+            // إظهار إشعار
+            showToast();
+
+            // إضافة ملف للسجلات
+            addLog(`بدء رفع الملف: ${file.name}`, 'info');
+            addLog(`حجم الملف: ${(file.size / 1024).toFixed(2)} KB`, 'info');
+
+            // محاكاة الرفع
+            setTimeout(() => {
+                addLog(`تم الرفع بنجاح إلى مساحة 24GB.`, 'success');
+                addLog(`جاري تثبيت المكتبات (npm install)...`, 'warn');
+                
+                setTimeout(() => {
+                    addLog(`تم تثبيت المكتبات. جاري تشغيل البوت...`, 'success');
+                    
+                    // إضافة المشروع للقائمة
+                    createProjectCard(file.name);
+                    
+                    setTimeout(() => {
+                        addLog(`[ONLINE] البوت يعمل الآن 24/7 بنجاح!`, 'success');
+                    }, 1500);
+
+                }, 2000);
+            }, 1000);
+            
+            // تصفير حقل الإدخال
+            document.getElementById('file-input').value = '';
+        }
+
+        // إنشاء بطاقة المشروع
+        function createProjectCard(fileName) {
+            // إزالة رسالة "لا توجد مشاريع"
+            if(projectsList.innerText.includes('لا توجد مشاريع')) {
+                projectsList.innerHTML = '';
+            }
+
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.innerHTML = `
+                <div class="project-info">
+                    <div class="project-icon"><i class="fa-brands fa-node-js"></i></div>
+                    <div class="project-details">
+                        <h3>${fileName}</h3>
+                        <p>Node.js v20.x | المنفذ: 3000</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="status-badge"><div class="status-dot"></div> يعمل 24/7</div>
+                    <button class="btn-stop" onclick="stopProject(this, '${fileName}')"><i class="fa-solid fa-stop"></i> إيقاف</button>
+                </div>
+            `;
+            projectsList.appendChild(card);
+        }
+
+        // إيقاف المشروع
+        function stopProject(button, fileName) {
+            const card = button.closest('.project-card');
+            const badge = card.querySelector('.status-badge');
+            
+            badge.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--text-muted);"></i> متوقف';
+            badge.style.color = 'var(--text-muted)';
+            badge.style.background = 'rgba(255,255,255,0.05)';
+            
+            button.innerHTML = '<i class="fa-solid fa-trash"></i> حذف';
+            button.style.background = '#ef4444';
+            button.style.color = 'white';
+            button.onclick = () => { card.remove(); addLog(`تم حذف مشروع ${fileName}`, 'warn'); checkEmptyState(); };
+            
+            addLog(`تم إيقاف البوت [${fileName}]`, 'warn');
+        }
+
+        function checkEmptyState() {
+            if(projectsList.children.length === 0) {
+                projectsList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">لا توجد مشاريع نشطة. قم برفع ملف للبدء.</div>';
+            }
+        }
+
+        // إضافة سجل للطرفية
+        function addLog(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            
+            let prefix = '[INFO]';
+            let colorClass = 'log-info';
+            
+            if (type === 'success') { prefix = '[SUCCESS]'; colorClass = 'log-success'; }
+            if (type === 'warn') { prefix = '[WARN]'; colorClass = 'log-warn'; }
+
+            line.innerHTML = `<span class="log-time">[${time}]</span> <span class="${colorClass}">${prefix}</span> ${message}`;
+            terminalBody.appendChild(line);
+            
+            // التمرير التلقائي للأسفل
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        // إظهار الإشعار
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
